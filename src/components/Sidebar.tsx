@@ -11,9 +11,9 @@ export default function Sidebar() {
   const query = useQuery(stepsQueryOptions())
 
   return (
-    <main className="p-2 flex-1 w-full max-w-sm max-h-screen overflow-y-auto">
+    <main className="p-2 flex-1 w-full max-w-sm max-h-[calc(100vh-4rem)] overflow-y-auto">
       <div className="relative pb-6">
-        <TanStackObservable {...query} name="Steps" />
+        <TanStackObservable isFetching={query.isFetching} name="Steps" />
         <div key={query.dataUpdatedAt}>
           <ul className="flex flex-col gap-2 divide-y divide-gray-200">
             {query.data?.map((step) => (
@@ -37,7 +37,7 @@ function Step({ step }: { step: Types.StepType }) {
 
   return (
     <div className="relative">
-      <TanStackObservable {...query} name={step.name} />
+      <TanStackObservable isFetching={query.isFetching} name={step.name} />
       <Link
         key={step.id}
         className="flex flex-col space-y-1 w-full font-medium cursor-pointer text-left relative"

@@ -2,16 +2,18 @@ import { useCallback, useEffect, useRef, useState, type PropsWithChildren } from
 import * as Types from "./types"
 import { BuildContext } from "./useBuild"
 import generateEvent from "../util/generateEvent"
-import { useQueryClient } from "@tanstack/react-query"
+import { useQuery, useQueryClient } from "@tanstack/react-query"
+import { buildQueryOptions } from "../util/build"
 
 type StepsMap = Record<Types.StepType["id"], Set<Types.JobType["id"]>>
 
 export default function BuildContextProvider(props: PropsWithChildren<{ build: Types.BuildType }>) {
   const queryClient = useQueryClient()
-  const [build, setBuild] = useState<Types.BuildType>(props.build)
   const stepJobsMap = useRef<StepsMap>({})
   const [simulateRunningBuild, setSimulateRunningBuild] = useState<boolean | null>(null)
   const [events, setEvents] = useState<Types.EventType[]>([])
+
+  const buildQuery = useQuery(buildQueryOptions({ initialData: props.build }))
 
   // Create stepJobs map whenever a ["jobs", job.id] is added
   useEffect(() => {
@@ -37,6 +39,9 @@ export default function BuildContextProvider(props: PropsWithChildren<{ build: T
   const simulateStepUpdate = useCallback(() => {
     const event = generateEvent()
     setEvents((events) => [event, ...events])
+
+    console.log("Invalidating build...")
+    queryClient.invalidateQueries({ queryKey: ["build"], exact: true })
 
     console.log("Invalidated steps:", event.step_uuids.join(", "))
     // For each step_uuids in the event, refetch that step
@@ -90,7 +95,15 @@ export default function BuildContextProvider(props: PropsWithChildren<{ build: T
   }, [simulateRunningBuild, queryClient, simulateStepUpdate])
 
   return (
-    <BuildContext.Provider value={{ build, simulateRunningBuild: Boolean(simulateRunningBuild), setSimulateRunningBuild, events }}>
+    <BuildContext.Provider
+      value={{
+        build: buildQuery.data ?? props.build,
+        buildFetching: buildQuery.isFetching,
+        simulateRunningBuild: Boolean(simulateRunningBuild),
+        setSimulateRunningBuild,
+        events,
+      }}
+    >
       {props.children}
     </BuildContext.Provider>
   )

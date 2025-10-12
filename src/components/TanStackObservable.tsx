@@ -1,9 +1,7 @@
-import type { UseQueryResult } from "@tanstack/react-query"
-
-type TanStackObservableProps = React.PropsWithChildren &
-  Partial<UseQueryResult> & {
-    name: string
-  }
+type TanStackObservableProps = React.PropsWithChildren & {
+  isFetching: boolean
+  name: string
+}
 
 export default function TanStackObservable(props: TanStackObservableProps) {
   return (

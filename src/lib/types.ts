@@ -2,8 +2,9 @@ export type StateType = "passed" | "failed" | "running" | "scheduled"
 
 export type BuildType = {
   id: string
+  name: string
   number: number
-  state: "running" | "passed" | "failed"
+  state: StateType
   started_at: Date
   finished_at: Date | null
 }

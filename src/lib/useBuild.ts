@@ -3,6 +3,7 @@ import * as Types from "./types"
 
 type BuildContextType = {
   build: Types.BuildType
+  buildFetching: boolean
   simulateRunningBuild: boolean
   setSimulateRunningBuild: (simulate: boolean) => void
   events: Types.EventType[]

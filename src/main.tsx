@@ -26,8 +26,9 @@ const router = createBrowserRouter([
 
 const build = {
   id: "build-1",
+  name: "Build #42",
   number: 42,
-  state: "running" as const,
+  state: "scheduled" as const,
   started_at: new Date(),
   finished_at: null,
 }

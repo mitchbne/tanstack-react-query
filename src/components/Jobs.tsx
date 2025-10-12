@@ -10,7 +10,7 @@ export default function Jobs() {
   const query = useQuery(jobsQueryOptions())
 
   return (
-    <div className="w-full flex-1">
+    <div className="w-full flex-1 ">
       <table className="w-full divide-y divide-gray-300 text-sm text-gray-600">
         <tbody>
           {query.data?.map((job) => (
@@ -43,7 +43,7 @@ function Job({ job }: { job: Types.JobType }) {
         <StateIndicator state={query.data.state} />
       </td>
       <td className="p-2 text-right relative w-48">
-        <TanStackObservable {...query} name={job.name} />
+        <TanStackObservable isFetching={query.isFetching} name={job.name} />
       </td>
     </tr>
   )

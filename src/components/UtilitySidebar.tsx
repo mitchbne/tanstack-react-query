@@ -12,7 +12,7 @@ export default function UtilitySidebar() {
   const { currentStepId, currentJobId } = useCurrentJobOrStep()
 
   return (
-    <aside className="w-md flex flex-col h-screen">
+    <aside className="w-md flex flex-col h-full max-h-[calc(100vh-4rem)] bg-gray-50" aria-label="Utility sidebar">
       <div className="flex-1 p-2">
         <h2 className="text-lg font-medium">About</h2>
         <p className="mt-2 text-sm text-gray-600">
