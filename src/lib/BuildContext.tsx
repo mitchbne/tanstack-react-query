@@ -38,10 +38,9 @@ export default function BuildContextProvider(props: PropsWithChildren<{ build: T
     const event = generateEvent()
     setEvents((events) => [event, ...events])
 
+    console.log("Invalidated steps:", event.step_uuids.join(", "))
     // For each step_uuids in the event, refetch that step
     event.step_uuids.forEach((step_id) => {
-      console.log("Invalidated step", step_id)
-
       queryClient.invalidateQueries({ queryKey: ["steps", step_id], exact: true })
       queryClient.invalidateQueries({ queryKey: ["steps", step_id, "step-jobs"], exact: true })
 
