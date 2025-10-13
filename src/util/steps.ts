@@ -44,7 +44,7 @@ export const stepDrawerQueryOptions = (stepId: Types.StepType["id"], queryOption
   const options: UseQueryOptions<Types.StepDrawerReturnType> = {
     queryKey: stepDrawerQueryKey(stepId),
     queryFn: () => fetchStepDrawer(stepId),
-    staleTime: Infinity,
+    staleTime: 0,
     ...queryOptionArgs
   }
 

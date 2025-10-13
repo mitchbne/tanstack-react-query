@@ -128,7 +128,7 @@ export const jobDrawerQueryOptions = (jobId: Types.JobType["id"], queryOptionArg
   const options: UseQueryOptions<Types.JobDrawerReturnType> = {
     queryKey: jobDrawerQueryKey(jobId),
     queryFn: () => fetchJobDrawer(jobId),
-    staleTime: Infinity,
+    staleTime: 0,
     ...queryOptionArgs
   }
 
