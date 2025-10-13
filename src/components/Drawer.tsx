@@ -1,14 +1,15 @@
-import { useQuery, type UseQueryResult } from "@tanstack/react-query"
+import { useQuery, useQueryClient, type UseQueryResult } from "@tanstack/react-query"
 import useQueryParams from "../lib/useQueryParams"
 import * as Types from "../lib/types"
-import { jobDrawerQueryOptions } from "../util/jobs"
-import { stepDrawerQueryOptions } from "../util/steps"
+import { jobDrawerQueryKey, jobDrawerQueryOptions, jobQueryKey } from "../util/jobs"
+import { stepDrawerQueryKey, stepDrawerQueryOptions, stepQueryKey } from "../util/steps"
 import { useCallback, useEffect, useMemo, type PropsWithChildren } from "react"
 import { Navigate, useSearchParams } from "react-router"
 import TanStackObservable from "./TanStackObservable"
 import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/outline"
 
 export default function DrawerWrapper() {
+  const queryClient = useQueryClient()
   const params = useQueryParams()
 
   const jobsDrawerQuery = useQuery(
@@ -22,6 +23,29 @@ export default function DrawerWrapper() {
       enabled: Boolean(params.stepUuid),
     }),
   )
+
+  // Populate the ["jobs", job.id] query cache when we get data for the ["jobs", job.id, "job-drawer"] query
+  useEffect(() => {
+    if (jobsDrawerQuery.data) {
+      const otherJobs = jobsDrawerQuery.data.filter((job) => job.id !== params.jobUuid) // Exclude the main job, as it's already in the cache
+      otherJobs.forEach((job) => {
+        queryClient.setQueryData(jobQueryKey(job.id), job)
+        queryClient.setQueryData(jobDrawerQueryKey(job.id), jobsDrawerQuery.data)
+      })
+    }
+  }, [jobsDrawerQuery.data, params.jobUuid])
+
+  // Populate the ["steps", step.id] and ["jobs", job.id] query cache when we get data for the ["steps", step.id, "step-drawer"] query
+  useEffect(() => {
+    if (stepDrawerQuery.data) {
+      queryClient.setQueryData(stepQueryKey(stepDrawerQuery.data.step.id), stepDrawerQuery.data.step)
+      queryClient.setQueryData(stepDrawerQueryKey(stepDrawerQuery.data.step.id), stepDrawerQuery.data)
+      stepDrawerQuery.data.jobs.forEach((job) => {
+        queryClient.setQueryData(jobQueryKey(job.id), job)
+        queryClient.setQueryData(jobDrawerQueryKey(job.id), stepDrawerQuery.data.jobs)
+      })
+    }
+  }, [stepDrawerQuery.data])
 
   const [, setSearchParams] = useSearchParams()
   const handleDrawerClose = useCallback(() => {

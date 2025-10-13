@@ -5,6 +5,8 @@ import generateEvent from "../util/generateEvent"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { buildQueryOptions } from "../util/build"
 import { useAsyncQueuer } from "@tanstack/react-pacer"
+import { stepDrawerQueryKey, stepQueryKey } from "../util/steps"
+import { jobDrawerQueryKey, jobQueryKey } from "../util/jobs"
 
 type StepsMap = Record<Types.StepType["id"], Set<Types.JobType["id"]>>
 
@@ -29,10 +31,10 @@ export default function BuildContextProvider(props: PropsWithChildren<{ build: T
     },
   )
 
-  // Create stepJobs map whenever a ["jobs", job.id] is added
   useEffect(() => {
     queryClient.getQueryCache().subscribe((event) => {
       if (
+        // Create stepJobs map whenever a ["jobs", job.id] is added
         (event.type === "added" || event.type === "updated") &&
         event.query.queryKey.length == 2 &&
         event.query.queryKey[0] === "jobs" &&
@@ -48,25 +50,23 @@ export default function BuildContextProvider(props: PropsWithChildren<{ build: T
         stepJobsMap.current = newStepJobsMap
       }
     })
-  }, [queryClient])
+  }, [])
 
   const simulateStepUpdate = useCallback(() => {
     const event = generateEvent()
     setEvents((events) => [event, ...events])
     console.log(new Date().toISOString() + " New build event", event)
 
-    // console.log("The following steps have been updated:", event.step_uuids.join(", "))
     refetchBuildQueue.addItem(event)
 
-    // console.log("Invalidated steps:", event.step_uuids.join(", "))
     // For each step_uuids in the event, refetch that step
     event.step_uuids.forEach((step_id) => {
-      queryClient.invalidateQueries({ queryKey: ["steps", step_id], exact: true })
-      queryClient.invalidateQueries({ queryKey: ["steps", step_id, "step-jobs"], exact: true })
+      queryClient.invalidateQueries({ queryKey: stepQueryKey(step_id), exact: true })
+      queryClient.invalidateQueries({ queryKey: stepDrawerQueryKey(step_id), exact: true })
 
       stepJobsMap.current[step_id]?.forEach((job_id) => {
-        queryClient.invalidateQueries({ queryKey: ["jobs", job_id] })
-        queryClient.invalidateQueries({ queryKey: ["jobs", job_id, "job-drawer"], exact: true })
+        queryClient.invalidateQueries({ queryKey: jobQueryKey(job_id) })
+        queryClient.invalidateQueries({ queryKey: jobDrawerQueryKey(job_id), exact: true })
       })
     })
   }, [])
@@ -80,6 +80,7 @@ export default function BuildContextProvider(props: PropsWithChildren<{ build: T
 
     // We've stopped simulating a running build
     if (!simulateRunningBuild) {
+      console.log("Build simulation stopped...")
       const event: Types.EventType = {
         id: crypto.randomUUID(),
         type: "simulation:stopped",
@@ -91,7 +92,7 @@ export default function BuildContextProvider(props: PropsWithChildren<{ build: T
       return
     }
 
-    console.log("Simulating a running build...")
+    console.log("Build simulation started...")
     const event: Types.EventType = {
       id: crypto.randomUUID(),
       type: "simulation:started",

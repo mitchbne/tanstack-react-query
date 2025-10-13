@@ -3,12 +3,18 @@ import * as Types from "../lib/types"
 import generateRandomState from "./generateRandomState"
 import { AsyncBatcher } from "@tanstack/react-pacer"
 
+export const stepsQueryKey = () => ["steps"]
+
 export const stepsQueryOptions = () => {
   return queryOptions({
-    queryKey: ["steps"],
+    queryKey: stepsQueryKey(),
     queryFn: () => fetchSteps(),
     staleTime: 0,
   })
+}
+
+export const stepQueryKey = (stepId: Types.StepType["id"]) => {
+  return ["steps", stepId]
 }
 
 export const stepQueryOptions = (stepId: Types.StepType["id"], queryOptionArgs: Omit<UseQueryOptions<Types.StepType>, "queryKey" | "queryFn"> = {}) => {
@@ -17,7 +23,7 @@ export const stepQueryOptions = (stepId: Types.StepType["id"], queryOptionArgs: 
   }
 
   const options: UseQueryOptions<Types.StepType> = {
-    queryKey: ["steps", stepId],
+    queryKey: stepQueryKey(stepId),
     queryFn: () => fetchStepBatched(stepId),
     staleTime: Infinity,
     ...queryOptionArgs
