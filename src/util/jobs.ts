@@ -31,7 +31,7 @@ export function fetchJobs(): Promise<Types.JobType[]> {
       })
       )
 
-    }, 2000)
+    }, 500)
   })
 }
 
@@ -70,7 +70,7 @@ async function fetchJobsByIds(ids: string[]): Promise<Types.JobType[]> {
             jobRetriedIn,
             state: generateRandomState(),
           })
-        }, 1000)
+        }, 500)
       }),
   )
   return Promise.all(promises)
@@ -150,6 +150,6 @@ export function fetchJobDrawer(jobId: Types.JobType["id"]): Promise<Types.JobDra
         }
       })
       resolve(jobsInStep satisfies Types.JobDrawerReturnType)
-    }, 1500)
+    }, 500)
   })
 }

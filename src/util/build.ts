@@ -26,6 +26,6 @@ export function fetchBuild(buildId: string): Promise<Types.BuildType> {
       }
 
       resolve(newBuild)
-    }, 2000)
+    }, 500)
   })
 }

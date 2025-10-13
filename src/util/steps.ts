@@ -60,7 +60,7 @@ export function fetchSteps(): Promise<Types.StepType[]> {
         state: generateRandomState(),
       }))
       resolve(steps)
-    }, 2000)
+    }, 500)
   })
 }
 
@@ -75,7 +75,7 @@ async function fetchStepsByIds(ids: string[]): Promise<Types.StepType[]> {
             name: 'Step #' + stepId.split('-')[1],
             state: generateRandomState(),
           })
-        }, 1000)
+        }, 500)
       }),
   )
   return Promise.all(promises)
@@ -142,6 +142,6 @@ export async function fetchStepDrawer(stepId: string): Promise<Types.StepDrawerR
       })
 
       resolve({ step, jobs } satisfies Types.StepDrawerReturnType)
-    }, 2000)
+    }, 500)
   })
 }
