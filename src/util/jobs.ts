@@ -11,13 +11,17 @@ export const jobsQueryOptions = () => {
   })
 }
 
+export const jobQueryKey = (jobId: Types.JobType["id"]) => {
+  return ["jobs", jobId]
+}
+
 export const jobQueryOptions = (jobId: Types.JobType["id"], queryOptionArgs: Omit<UseQueryOptions<Types.JobType>, "queryKey" | "queryFn"> = {}) => {
   if (!jobId && queryOptionArgs.enabled !== false) {
     throw new Error("jobId is required")
   }
 
   const options: UseQueryOptions<Types.JobType> = {
-    queryKey: ["jobs", jobId],
+    queryKey: jobQueryKey(jobId),
     queryFn: () => fetchJobBatched(jobId),
     staleTime: Infinity,
     ...queryOptionArgs
