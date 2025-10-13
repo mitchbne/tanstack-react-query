@@ -26,6 +26,25 @@ export const stepQueryOptions = (stepId: Types.StepType["id"], queryOptionArgs: 
   return queryOptions(options)
 }
 
+export const stepDrawerQueryKey = (stepId: Types.StepType["id"]) => {
+  return ["steps", stepId, "step-drawer"]
+}
+
+export const stepDrawerQueryOptions = (stepId: Types.StepType["id"], queryOptionArgs: Omit<UseQueryOptions<Types.StepDrawerReturnType>, "queryKey" | "queryFn"> = {}) => {
+  if (!stepId && queryOptionArgs.enabled !== false) {
+    throw new Error("jobId is required")
+  }
+
+  const options: UseQueryOptions<Types.StepDrawerReturnType> = {
+    queryKey: stepDrawerQueryKey(stepId),
+    queryFn: () => fetchStepDrawer(stepId),
+    staleTime: Infinity,
+    ...queryOptionArgs
+  }
+
+  return queryOptions(options)
+}
+
 export function fetchSteps(): Promise<Types.StepType[]> {
   console.log(new Date().toISOString() + " Fetching Steps...")
   return new Promise((resolve) => {
@@ -39,7 +58,6 @@ export function fetchSteps(): Promise<Types.StepType[]> {
     }, 2000)
   })
 }
-
 
 async function fetchStepsByIds(ids: string[]): Promise<Types.StepType[]> {
   // your simulated network; replace with real fetch
@@ -93,5 +111,32 @@ const stepsBatcher = new AsyncBatcher<BatchItem>(
 export function fetchStepBatched(id: string): Promise<Types.StepType> {
   return new Promise<Types.StepType>((resolve, reject) => {
     stepsBatcher.addItem({ id: String(id), resolve, reject })
+  })
+}
+
+export async function fetchStepDrawer(stepId: string): Promise<Types.StepDrawerReturnType> {
+  console.log(new Date().toISOString() + " Fetching Step drawer for " + stepId + "...")
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      const step = {
+        id: stepId,
+        name: 'Step #' + stepId.split('-')[1],
+        state: generateRandomState(),
+      }
+
+      const jobs = Array.from({ length: 10 }, (_, i) => i + 1).map((i) => {
+        const jobIdNumber = (parseInt(stepId.split("-")[1]) - 1) * 10 + i
+        const jobRetriedIn = jobIdNumber % 10 === 0 ? null : `job-${jobIdNumber + 1}`
+        return {
+          id: `job-${jobIdNumber}`,
+          name: "Job #" + jobIdNumber,
+          step_uuid: stepId,
+          jobRetriedIn,
+          state: generateRandomState(),
+        }
+      })
+
+      resolve({ step, jobs } satisfies Types.StepDrawerReturnType)
+    }, 2000)
   })
 }

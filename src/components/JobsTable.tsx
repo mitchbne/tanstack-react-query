@@ -10,7 +10,8 @@ export default function JobsTable() {
   const query = useQuery(jobsQueryOptions())
 
   return (
-    <div className="w-full flex-1 ">
+    <div className="w-full flex-1 relative">
+      <TanStackObservable isFetching={query.isFetching} name="Jobs" position="top-right" />
       <table className="w-full divide-y divide-gray-300 text-sm text-gray-600">
         <tbody>
           {query.data?.map((job) => (

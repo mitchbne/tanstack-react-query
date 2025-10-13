@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react"
 import useQueryParams from "./useQueryParams"
-import { jobQueryKey } from "../util/jobs"
+import { jobQueryOptions } from "../util/jobs"
 import * as Types from "../lib/types"
-import { useQueryClient } from "@tanstack/react-query"
+import { QueryObserver, useQueryClient } from "@tanstack/react-query"
 
 export type UseCurrentJobOrStep = {
   currentStepId: string | null
@@ -31,33 +31,26 @@ export default function useCurrentJobOrStep() {
     if (jobUuid) {
       setCurrentJobId(jobUuid)
 
-      // This is mainly to keep TypeScript happy; queryClient should always be defined inside a QueryClientProvider.
-      if (!queryClient) {
-        return
-      }
+      const jobsObserver = new QueryObserver(queryClient, jobQueryOptions(jobUuid))
 
-      const stepUuid = queryClient.getQueryCache().find<Types.JobType>({ queryKey: jobQueryKey(jobUuid) })?.state.data?.step_uuid ?? null
-
+      // If we have can get a stepUuid from the job, use that as the current step. Otherwise, subscribe to the job and update the current step when it changes.
+      const stepUuid = jobsObserver.getCurrentResult().data?.step_uuid ?? null
       if (stepUuid) {
         setCurrentStepId(stepUuid)
       } else {
-        queryClient.getQueryCache().subscribe((event) => {
-          if (
-            (event.type === "added" || event.type === "updated") &&
-            event.query.queryKey.length == 2 &&
-            event.query.queryKey[0] === "jobs" &&
-            event.query.queryKey[1] === jobUuid
-          ) {
-            const job = event.query.state.data as Types.JobType | undefined
-            if (!job) return
-
-            const stepUuid = job.step_uuid
+        const jobsObserverUnsubscribe = jobsObserver.subscribe((result) => {
+          if (result.isSuccess && result.data) {
+            const stepUuid = result.data.step_uuid
             setCurrentStepId(stepUuid)
           }
         })
+
+        return () => {
+          jobsObserverUnsubscribe()
+        }
       }
     }
-  }, [stepUuid, jobUuid, queryClient])
+  }, [stepUuid, jobUuid])
 
   return {
     currentStepId,

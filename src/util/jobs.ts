@@ -20,7 +20,7 @@ export function fetchJobs(): Promise<Types.JobType[]> {
     setTimeout(() => {
       resolve(Array.from({ length: 100 }, (_, i) => i + 1).map((i) => {
         const stepNumber = Math.floor((i - 1) / 10) + 1
-        const jobRetriedIn = i % 5 === 0 ? null : `job-${i + 1}`
+        const jobRetriedIn = i % 10 === 0 ? null : `job-${i + 1}`
         return  {
           id: `job-${i}`,
           name: `Job #${i}`,
@@ -63,7 +63,7 @@ async function fetchJobsByIds(ids: string[]): Promise<Types.JobType[]> {
         setTimeout(() => {
           const jobIdNumber = parseInt(jobId.split("-")[1])
           const stepNumber = Math.floor((jobIdNumber - 1) / 10) + 1
-          const jobRetriedIn = jobIdNumber - 1 % 5 === 0 ? null : `job-${jobIdNumber + 1}`
+          const jobRetriedIn = jobIdNumber % 10 === 0 ? null : `job-${jobIdNumber + 1}`
           resolve({
             id: jobId,
             name: "Job #" + jobId.split("-")[1],
@@ -112,5 +112,45 @@ const jobsBatcher = new AsyncBatcher<BatchItem>(
 export function fetchJobBatched(id: string): Promise<Types.JobType> {
   return new Promise<Types.JobType>((resolve, reject) => {
     jobsBatcher.addItem({ id: String(id), resolve, reject })
+  })
+}
+
+// Fetching job-drawer data
+export const jobDrawerQueryKey = (jobId: Types.JobType["id"]) => {
+  return ["jobs", jobId, "job-drawer"]
+}
+
+export const jobDrawerQueryOptions = (jobId: Types.JobType["id"], queryOptionArgs: Omit<UseQueryOptions<Types.JobDrawerReturnType>, "queryKey" | "queryFn"> = {}) => {
+  if (!jobId && queryOptionArgs.enabled !== false) {
+    throw new Error("jobId is required")
+  }
+
+  const options: UseQueryOptions<Types.JobDrawerReturnType> = {
+    queryKey: jobDrawerQueryKey(jobId),
+    queryFn: () => fetchJobDrawer(jobId),
+    staleTime: Infinity,
+    ...queryOptionArgs
+  }
+
+  return queryOptions(options)
+}
+
+export function fetchJobDrawer(jobId: Types.JobType["id"]): Promise<Types.JobDrawerReturnType> {
+  console.log(new Date().toISOString() + " Fetching Job Drawer for " + jobId + "...")
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      const stepNumber = Math.floor((parseInt(jobId.split("-")[1]) - 1) / 10) + 1
+      const jobsInStep = Array.from({ length: 10 }, (_, i) => i + 1 + (stepNumber - 1) * 10).map((i) => {
+        const jobRetriedIn = i % 10 === 0 ? null : `job-${i + 1}`
+        return  {
+          id: `job-${i}`,
+          name: `Job #${i}`,
+          step_uuid: `step-${stepNumber}`,
+          jobRetriedIn,
+          state: generateRandomState(),
+        }
+      })
+      resolve(jobsInStep satisfies Types.JobDrawerReturnType)
+    }, 1500)
   })
 }

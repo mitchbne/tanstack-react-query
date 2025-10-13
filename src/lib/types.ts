@@ -30,3 +30,10 @@ export type EventType = {
   step_uuids: StepType["id"][]
   message: string
 }
+
+export type StepDrawerReturnType = {
+  step: StepType
+  jobs: JobType[]
+}
+
+export type JobDrawerReturnType = JobType[]
