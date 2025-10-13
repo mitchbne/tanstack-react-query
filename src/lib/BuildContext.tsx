@@ -4,6 +4,7 @@ import { BuildContext } from "./useBuild"
 import generateEvent from "../util/generateEvent"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { buildQueryOptions } from "../util/build"
+import { useAsyncQueuer } from "@tanstack/react-pacer"
 
 type StepsMap = Record<Types.StepType["id"], Set<Types.JobType["id"]>>
 
@@ -14,6 +15,19 @@ export default function BuildContextProvider(props: PropsWithChildren<{ build: T
   const [events, setEvents] = useState<Types.EventType[]>([])
 
   const buildQuery = useQuery(buildQueryOptions(props.build.id, { initialData: props.build }))
+
+  const refetchBuildQueue = useAsyncQueuer<Types.EventType, void>(
+    async () => {
+      // If the query is already fetching, this will dedupe; we still await settlement
+      await buildQuery.refetch()
+    },
+    {
+      concurrency: 1, // Ensure strictly sequential processing
+      maxSize: 1, // Keep at most ONE pending item; extras are rejected
+      started: true, // Start immediately when the first item arrives
+      wait: 0, // Optional: Amount of time to wait before processing the next item
+    },
+  )
 
   // Create stepJobs map whenever a ["jobs", job.id] is added
   useEffect(() => {
@@ -39,13 +53,12 @@ export default function BuildContextProvider(props: PropsWithChildren<{ build: T
   const simulateStepUpdate = useCallback(() => {
     const event = generateEvent()
     setEvents((events) => [event, ...events])
+    console.log(new Date().toISOString() + " New build event", event)
 
-    console.log("The following steps have been updated:", event.step_uuids.join(", "))
+    // console.log("The following steps have been updated:", event.step_uuids.join(", "))
+    refetchBuildQueue.addItem(event)
 
-    console.log(new Date().toISOString() + " Trigger build refetch...")
-    buildQuery.refetch()
-
-    console.log("Invalidated steps:", event.step_uuids.join(", "))
+    // console.log("Invalidated steps:", event.step_uuids.join(", "))
     // For each step_uuids in the event, refetch that step
     event.step_uuids.forEach((step_id) => {
       queryClient.invalidateQueries({ queryKey: ["steps", step_id], exact: true })
@@ -56,7 +69,7 @@ export default function BuildContextProvider(props: PropsWithChildren<{ build: T
         queryClient.invalidateQueries({ queryKey: ["jobs", job_id, "job-drawer"], exact: true })
       })
     })
-  }, [queryClient])
+  }, [])
 
   // Create build change events
   useEffect(() => {
@@ -94,7 +107,7 @@ export default function BuildContextProvider(props: PropsWithChildren<{ build: T
     }, 600)
 
     return () => clearInterval(interval)
-  }, [simulateRunningBuild, queryClient, simulateStepUpdate])
+  }, [simulateRunningBuild, simulateStepUpdate])
 
   return (
     <BuildContext.Provider
