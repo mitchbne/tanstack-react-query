@@ -68,7 +68,7 @@ type BatchItem = {
 
 const jobsBatcher = new AsyncBatcher<BatchItem>(
   async (items) => {
-    console.log("Fetching batch of jobs:", items.map(i => i.id).join(", "));
+    // console.log("Fetching batch of jobs:", items.map(i => i.id).join(", "));
     const ids = items.map((it) => it.id)
     const jobs = await fetchJobsByIds(ids)
     const byId = new Map(jobs.map((p) => [String(p.id), p]))

@@ -13,7 +13,7 @@ export default function BuildContextProvider(props: PropsWithChildren<{ build: T
   const [simulateRunningBuild, setSimulateRunningBuild] = useState<boolean | null>(null)
   const [events, setEvents] = useState<Types.EventType[]>([])
 
-  const buildQuery = useQuery(buildQueryOptions({ initialData: props.build }))
+  const buildQuery = useQuery(buildQueryOptions(props.build.id, { initialData: props.build }))
 
   // Create stepJobs map whenever a ["jobs", job.id] is added
   useEffect(() => {
@@ -40,8 +40,10 @@ export default function BuildContextProvider(props: PropsWithChildren<{ build: T
     const event = generateEvent()
     setEvents((events) => [event, ...events])
 
-    console.log("Invalidating build...")
-    queryClient.invalidateQueries({ queryKey: ["build"], exact: true })
+    console.log("The following steps have been updated:", event.step_uuids.join(", "))
+
+    console.log(new Date().toISOString() + " Trigger build refetch...")
+    buildQuery.refetch()
 
     console.log("Invalidated steps:", event.step_uuids.join(", "))
     // For each step_uuids in the event, refetch that step
@@ -89,7 +91,7 @@ export default function BuildContextProvider(props: PropsWithChildren<{ build: T
     simulateStepUpdate()
     const interval = setInterval(() => {
       simulateStepUpdate()
-    }, 2000)
+    }, 600)
 
     return () => clearInterval(interval)
   }, [simulateRunningBuild, queryClient, simulateStepUpdate])
