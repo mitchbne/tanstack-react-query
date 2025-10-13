@@ -3,14 +3,39 @@ import * as Types from "../lib/types"
 import generateRandomState from "./generateRandomState"
 import { AsyncBatcher } from "@tanstack/react-pacer"
 
+// Fetching all jobs
+export const jobsQueryKey = () => ["jobs"]
+
 export const jobsQueryOptions = () => {
   return queryOptions({
-    queryKey: ["jobs"],
+    queryKey: jobsQueryKey(),
     queryFn: () => fetchJobs(),
     staleTime: 0,
   })
 }
 
+export function fetchJobs(): Promise<Types.JobType[]> {
+  console.log(new Date().toISOString() + " Fetching Jobs...")
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve(Array.from({ length: 100 }, (_, i) => i + 1).map((i) => {
+        const stepNumber = Math.floor((i - 1) / 10) + 1
+        const jobRetriedIn = i % 5 === 0 ? null : `job-${i + 1}`
+        return  {
+          id: `job-${i}`,
+          name: `Job #${i}`,
+          step_uuid: `step-${stepNumber}`,
+          jobRetriedIn,
+          state: generateRandomState(),
+        }
+      })
+      )
+
+    }, 2000)
+  })
+}
+
+// Fetching a single job by ID
 export const jobQueryKey = (jobId: Types.JobType["id"]) => {
   return ["jobs", jobId]
 }
@@ -30,32 +55,20 @@ export const jobQueryOptions = (jobId: Types.JobType["id"], queryOptionArgs: Omi
   return queryOptions(options)
 }
 
-export function fetchJobs(): Promise<Types.JobType[]> {
-  console.log(new Date().toISOString() + " Fetching Jobs...")
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve(Array.from({ length: 100 }, (_, i) => i + 1).map((i) => ({
-          id: `job-${i}`,
-          name: `Job #${i}`,
-          step_uuid: `step-${Math.floor((i - 1) / 10) + 1}`,
-          state: generateRandomState(),
-        }))
-      )
-
-    }, 2000)
-  })
-}
-
 async function fetchJobsByIds(ids: string[]): Promise<Types.JobType[]> {
   // your simulated network; replace with real fetch
   const promises = ids.map(
     (jobId) =>
       new Promise<Types.JobType>((resolve) => {
         setTimeout(() => {
+          const jobIdNumber = parseInt(jobId.split("-")[1])
+          const stepNumber = Math.floor((jobIdNumber - 1) / 10) + 1
+          const jobRetriedIn = jobIdNumber - 1 % 5 === 0 ? null : `job-${jobIdNumber + 1}`
           resolve({
             id: jobId,
             name: "Job #" + jobId.split("-")[1],
-            step_uuid: `step-${Math.floor((parseInt(jobId.split("-")[1]) - 1) / 10) + 1}`,
+            step_uuid: `step-${stepNumber}`,
+            jobRetriedIn,
             state: generateRandomState(),
           })
         }, 1000)

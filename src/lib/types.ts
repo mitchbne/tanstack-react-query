@@ -19,6 +19,7 @@ export type JobType = {
   id: string
   name: string
   step_uuid: string
+  jobRetriedIn: JobType["id"] | null
   state: StateType
 }
 

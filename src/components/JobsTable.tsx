@@ -6,7 +6,7 @@ import TanStackObservable from "./TanStackObservable"
 import { useNavigate } from "react-router"
 import * as Types from "../lib/types"
 
-export default function Jobs() {
+export default function JobsTable() {
   const query = useQuery(jobsQueryOptions())
 
   return (
@@ -41,6 +41,13 @@ function Job({ job }: { job: Types.JobType }) {
       <td className="p-2 font-mono">{query.data.step_uuid}</td>
       <td className="p-2">
         <StateIndicator state={query.data.state} />
+      </td>
+      <td className="p-2">
+        {query.data.jobRetriedIn && (
+          <>
+            Retried in <span className="font-mono">{query.data.jobRetriedIn}</span>
+          </>
+        )}
       </td>
       <td className="p-2 text-right relative w-48">
         <TanStackObservable isFetching={query.isFetching} name={job.name} />
