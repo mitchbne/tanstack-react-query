@@ -9,7 +9,7 @@ export const stepsQueryOptions = () => {
   return queryOptions({
     queryKey: stepsQueryKey(),
     queryFn: () => fetchSteps(),
-    staleTime: 0,
+    refetchOnWindowFocus: "always",
   })
 }
 
@@ -25,7 +25,6 @@ export const stepQueryOptions = (stepId: Types.StepType["id"], queryOptionArgs: 
   const options: UseQueryOptions<Types.StepType> = {
     queryKey: stepQueryKey(stepId),
     queryFn: () => fetchStepBatched(stepId),
-    staleTime: Infinity,
     ...queryOptionArgs
   }
 
@@ -44,7 +43,7 @@ export const stepDrawerQueryOptions = (stepId: Types.StepType["id"], queryOption
   const options: UseQueryOptions<Types.StepDrawerReturnType> = {
     queryKey: stepDrawerQueryKey(stepId),
     queryFn: () => fetchStepDrawer(stepId),
-    staleTime: 0,
+    refetchOnWindowFocus: "always",
     ...queryOptionArgs
   }
 

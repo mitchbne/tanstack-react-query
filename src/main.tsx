@@ -10,10 +10,7 @@ import "./tailwind.css"
 
 const queryClient = new QueryClient({
   defaultOptions: {
-    queries: {
-      staleTime: 0,
-      refetchOnWindowFocus: true,
-    },
+    queries: { staleTime: Infinity },
   },
 })
 

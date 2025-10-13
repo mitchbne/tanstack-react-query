@@ -6,7 +6,7 @@ export const buildQueryOptions = (buildId: string, queryOptionArgs: Omit<UseQuer
   const options: UseQueryOptions<Types.BuildType> = {
     queryKey: ["build", buildId],
     queryFn: () => fetchBuild(buildId),
-    staleTime: 0,
+    refetchOnWindowFocus: "always",
     ...queryOptionArgs
   }
   return queryOptions(options)

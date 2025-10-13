@@ -10,7 +10,7 @@ export const jobsQueryOptions = () => {
   return queryOptions({
     queryKey: jobsQueryKey(),
     queryFn: () => fetchJobs(),
-    staleTime: 0,
+    refetchOnWindowFocus: "always",
   })
 }
 
@@ -48,7 +48,6 @@ export const jobQueryOptions = (jobId: Types.JobType["id"], queryOptionArgs: Omi
   const options: UseQueryOptions<Types.JobType> = {
     queryKey: jobQueryKey(jobId),
     queryFn: () => fetchJobBatched(jobId),
-    staleTime: Infinity,
     ...queryOptionArgs
   }
 
@@ -128,7 +127,7 @@ export const jobDrawerQueryOptions = (jobId: Types.JobType["id"], queryOptionArg
   const options: UseQueryOptions<Types.JobDrawerReturnType> = {
     queryKey: jobDrawerQueryKey(jobId),
     queryFn: () => fetchJobDrawer(jobId),
-    staleTime: 0,
+    refetchOnWindowFocus: "always",
     ...queryOptionArgs
   }
 
