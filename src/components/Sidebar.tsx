@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query"
-import { useAsyncQueuer } from "@tanstack/react-pacer"
+import { useDebouncedValue } from "@tanstack/react-pacer"
 import { stepDrawerQueryOptions, stepsQueryOptions } from "../util/steps"
 import TanStackObservable from "./TanStackObservable"
 import { Link } from "react-router"
@@ -7,26 +7,29 @@ import { stepQueryOptions } from "../util/steps"
 import StateIndicator from "./StateIndicator"
 import formatTime from "../util/formatTime"
 import * as Types from "../lib/types"
-import { useCallback, type MouseEventHandler } from "react"
+import { useCallback, useEffect, useState, type MouseEventHandler } from "react"
 
 export default function Sidebar() {
   const queryClient = useQueryClient()
   const query = useQuery(stepsQueryOptions())
 
+  const [currentHoveredStepId, setCurrentHoveredStepId] = useState(null as null | string)
+  const [debouncedHoveredStepId] = useDebouncedValue(currentHoveredStepId, { wait: 100 })
+
   const prefetchStepDrawer = useCallback(async (stepId: Types.StepType["id"]) => {
     await queryClient.ensureQueryData(stepDrawerQueryOptions(stepId))
   }, [])
 
-  const prefetchStepDrawerQueue = useAsyncQueuer(prefetchStepDrawer, {
-    addItemsTo: "front", // newest hovered link is top priority
-    maxSize: 2, // only prefetch 2 links at a time
-    wait: 300,
-    expirationDuration: 500, // If a link was hovered over 500ms ago, and still hasn't been prefetched, remove it from the queue
-  })
+  useEffect(() => {
+    if (debouncedHoveredStepId) {
+      prefetchStepDrawer(debouncedHoveredStepId)
+    }
+  }, [debouncedHoveredStepId])
 
+  // Debounce rapid mouse overs on the same step
   const handleMouseEnter = useCallback((event: React.MouseEvent<HTMLAnchorElement>) => {
     const stepId = event.currentTarget.id
-    prefetchStepDrawerQueue.addItem(stepId) // add the hovered step to the queuer
+    setCurrentHoveredStepId(stepId)
   }, [])
 
   return (
@@ -63,7 +66,7 @@ function Step({ step, handleMouseEnter }: { step: Types.StepType; handleMouseEnt
         data-testid="step-item"
         to={`?sid=${step.id}`}
         id={step.id}
-        onMouseMove={handleMouseEnter}
+        onMouseOver={handleMouseEnter}
       >
         <div className="flex flex-1 justify-between items-center gap-2">
           <span className="font-medium text-sm">{query.data.name}</span>

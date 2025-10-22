@@ -5,27 +5,29 @@ import StateIndicator from "./StateIndicator"
 import TanStackObservable from "./TanStackObservable"
 import { useNavigate } from "react-router"
 import * as Types from "../lib/types"
-import { useAsyncQueuer } from "@tanstack/react-pacer"
-import { useCallback } from "react"
+import { useDebouncedValue } from "@tanstack/react-pacer"
+import { useCallback, useEffect, useState } from "react"
 
 export default function JobsTable() {
   const queryClient = useQueryClient()
   const query = useQuery(jobsQueryOptions())
+  const [currentHoveredJobId, setCurrentHoveredJobId] = useState(null as null | string)
+  const [debouncedHoveredJobId] = useDebouncedValue(currentHoveredJobId, { wait: 100 })
 
   const prefetchJobDrawer = useCallback(async (jobId: Types.JobType["id"]) => {
     await queryClient.ensureQueryData(jobDrawerQueryOptions(jobId))
   }, [])
 
-  const prefetchJobDrawerQueue = useAsyncQueuer(prefetchJobDrawer, {
-    addItemsTo: "front", // newest hovered link is top priority
-    maxSize: 2, // only prefetch 2 links at a time
-    wait: 300,
-    expirationDuration: 500, // If a link was hovered over 500ms ago, and still hasn't been prefetched, remove it from the queue
-  })
+  useEffect(() => {
+    if (debouncedHoveredJobId) {
+      prefetchJobDrawer(debouncedHoveredJobId)
+    }
+  }, [debouncedHoveredJobId])
 
+  // Debounce rapid mouse overs on the same job
   const handleMouseEnter = useCallback((event: React.MouseEvent<HTMLTableRowElement>) => {
     const jobId = event.currentTarget.id
-    prefetchJobDrawerQueue.addItem(jobId) // add the hovered step to the queuer
+    setCurrentHoveredJobId(jobId)
   }, [])
 
   return (
@@ -53,7 +55,7 @@ function Job({ job, handleMouseEnter }: { job: Types.JobType; handleMouseEnter: 
   return (
     <tr
       className="border-b w-full border-gray-200 last-of-type:border-b-0 relative cursor-pointer hover:bg-gray-50"
-      onMouseEnter={handleMouseEnter}
+      onMouseOver={handleMouseEnter}
       id={job.id}
       onClick={() => {
         navigate(`?jid=${job.id}`)
