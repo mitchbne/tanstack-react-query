@@ -4,7 +4,7 @@ import { BuildContext } from "./useBuild"
 import generateEvent from "../util/generateEvent"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { buildQueryOptions } from "../util/build"
-import { useAsyncQueuer } from "@tanstack/react-pacer"
+import { AsyncQueuer, useAsyncQueuer } from "@tanstack/react-pacer"
 import { stepDrawerQueryKey, stepQueryKey } from "../util/steps"
 import { jobDrawerQueryKey, jobQueryKey } from "../util/jobs"
 
@@ -18,16 +18,20 @@ export default function BuildContextProvider(props: PropsWithChildren<{ build: T
 
   const buildQuery = useQuery(buildQueryOptions(props.build.id, { initialData: props.build }))
 
-  const refetchBuildQueue = useAsyncQueuer<Types.EventType, void>(
-    async () => {
+  const refetchBuildQueue = useAsyncQueuer<Types.RefetchBuildQueueItem, void>(
+    async (item) => {
+      const latency = new Date().getTime() - item.receivedAt
       // If the query is already fetching, this will dedupe; we still await settlement
+      console.log("Processing event:", item.event, "Latency:", latency)
       await buildQuery.refetch()
     },
     {
       concurrency: 1, // Ensure strictly sequential processing
-      maxSize: 1, // Keep at most ONE pending item; extras are rejected
       started: true, // Start immediately when the first item arrives
-      wait: 0, // Optional: Amount of time to wait before processing the next item
+      getPriority: (item: Types.RefetchBuildQueueItem) => item.priority,
+      wait: (queuer: AsyncQueuer<Types.RefetchBuildQueueItem>) => queuer.peekNextItem()?.wait ?? 0,
+      maxSize: 5, // Maximum of 5 items in the queue. New items beyond this will evict the lowest priority items
+      expirationDuration: 1000 * 5, // Optional: Expire items after 5s
     },
   )
 
@@ -57,7 +61,12 @@ export default function BuildContextProvider(props: PropsWithChildren<{ build: T
     setEvents((events) => [event, ...events])
     console.log(new Date().toISOString() + " New build event", event)
 
-    refetchBuildQueue.addItem(event)
+    refetchBuildQueue.addItem({
+      event: event.type as BuildChannelMessage["event"],
+      receivedAt: new Date().getTime(),
+      priority: 1,
+      wait: 0,
+    })
 
     // For each step_uuids in the event, refetch that step
     event.step_uuids.forEach((step_id) => {

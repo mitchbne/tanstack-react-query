@@ -23,6 +23,37 @@ export type JobType = {
   state: StateType
 }
 
+
+
+type BuildChannelEventType =
+  | "updated"
+  | "started"
+  | "finished"
+  | "skipped"
+  | "canceling"
+  | "commit:changed"
+  | "pipeline:changed"
+  | "steps:changed"
+  | "annotations:changed";
+
+type StepsChangedMessage = { event: "steps:changed"; step_uuids: string[] };
+type PipelineChangedMessage = {
+  event: "pipeline:changed";
+  step_added_uuids: string[];
+  step_changed_uuids: string[];
+};
+type BuildChannelMessage =
+  | { event: Omit<BuildChannelEventType, "steps:changed" | "pipeline:changed"> }
+  | PipelineChangedMessage
+  | StepsChangedMessage;
+
+export type RefetchBuildQueueItem = {
+  event: BuildChannelMessage["event"]
+  receivedAt: number
+  priority: number
+  wait: number
+}
+
 export type EventType = {
   id: string
   type: string
